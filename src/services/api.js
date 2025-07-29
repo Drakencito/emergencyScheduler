@@ -4,7 +4,7 @@ const API_BASE_URL = 'http://localhost:8000';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 300000, 
+  timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,7 +15,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('API Error:', error);
-    
+
     if (error.response) {
       // Error del servidor
       const errorMessage = error.response.data?.detail || error.response.data?.message || 'Error del servidor';
@@ -47,13 +47,13 @@ export const apiService = {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const response = await apiClient.post('/api/upload-csv', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      
+
       return response.data;
     } catch (error) {
       throw error;
@@ -68,7 +68,7 @@ export const apiService = {
         employees,
         sessionId
       };
-      
+
       const response = await apiClient.post('/api/optimize', optimizationRequest);
       return response.data;
     } catch (error) {
@@ -97,7 +97,7 @@ export const apiService = {
   }
 };
 
-// Clase para manejar WebSocket
+// Clase para manejar WebSocket (sin cambios, se mantiene)
 export class OptimizationWebSocket {
   constructor(sessionId) {
     this.sessionId = sessionId;
@@ -117,18 +117,18 @@ export class OptimizationWebSocket {
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.url);
-        
+
         this.ws.onopen = (event) => {
           console.log('WebSocket conectado:', this.sessionId);
           this.listeners.connection_open.forEach(listener => listener(event));
           resolve();
         };
-        
+
         this.ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
             console.log('WebSocket mensaje recibido:', message);
-            
+
             if (message.type && this.listeners[message.type]) {
               this.listeners[message.type].forEach(listener => listener(message.data || message));
             }
@@ -136,18 +136,18 @@ export class OptimizationWebSocket {
             console.error('Error parsing WebSocket message:', error);
           }
         };
-        
+
         this.ws.onclose = (event) => {
           console.log('WebSocket desconectado:', this.sessionId);
           this.listeners.connection_close.forEach(listener => listener(event));
         };
-        
+
         this.ws.onerror = (error) => {
           console.error('WebSocket error:', error);
           this.listeners.connection_error.forEach(listener => listener(error));
           reject(error);
         };
-        
+
       } catch (error) {
         reject(error);
       }
@@ -178,72 +178,7 @@ export class OptimizationWebSocket {
   }
 }
 
-// Utilidades
-export const utils = {
-  // Generar ID de sesión único
-  generateSessionId() {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  },
-
-  // Formatear tiempo estimado
-  formatEstimatedTime(generations, population) {
-    const totalOps = generations * population;
-    const minTime = Math.ceil(totalOps / 5000);
-    const maxTime = Math.ceil(totalOps / 3000);
-    
-    if (maxTime < 1) return 'Menos de 1 minuto';
-    if (minTime === maxTime) return `~${minTime} minuto${minTime > 1 ? 's' : ''}`;
-    return `${minTime}-${maxTime} minutos`;
-  },
-
-  // Validar configuración antes de enviar
-  validateConfig(config, employees) {
-    const errors = [];
-
-    if (!config) {
-      errors.push('Configuración requerida');
-      return errors;
-    }
-
-    if (!employees || employees.length < 10) {
-      errors.push('Se requieren al menos 10 empleados para experimentar');
-    }
-
-    if (!config.estaciones || config.estaciones.actual < 1) {
-      errors.push('Se requiere al menos 1 estación');
-    }
-
-    if (!config.algoritmo) {
-      errors.push('Configuración del algoritmo requerida');
-    } else {
-      if (config.algoritmo.generaciones < 20) {
-        errors.push('Se requieren al menos 20 generaciones');
-      }
-      if (config.algoritmo.poblacion < 10) {
-        errors.push('Se requiere población de al menos 10');
-      }
-    }
-
-    return errors;
-  },
-
-  // Convertir resultado para compatibilidad con frontend
-  processOptimizationResult(result) {
-    return {
-      ...result,
-      alerts: {
-        critical: result.alerts?.critical || 0,
-        warning: result.alerts?.warning || 0,
-        info: result.alerts?.info || 0,
-        details: result.alerts?.details || { high: [], medium: [], low: [] }
-      },
-      statistics: {
-        empleados48h: result.statistics?.empleados48h || 0,
-        distribucionBalance: result.statistics?.distribucionBalance || 0,
-        coberturaBilingue: result.statistics?.coberturaBilingue || 0
-      }
-    };
-  }
-};
+// Objeto utils VACIADO para evitar importaciones problemáticas
+export const utils = {};
 
 export default apiService;

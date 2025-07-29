@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/layout.css';
+import '../styles/layout.css'; // Asegúrate de que los estilos de layout se apliquen
 
 const ConfigPanel = ({ config, onConfigChange }) => {
   const [localConfig, setLocalConfig] = useState(config);
@@ -14,7 +14,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
         [field]: value
       }
     };
-    
+
     setLocalConfig(newConfig);
     setHasChanges(true);
   };
@@ -30,7 +30,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
         }
       }
     };
-    
+
     setLocalConfig(newConfig);
     setHasChanges(true);
   };
@@ -38,7 +38,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
   const handleSave = () => {
     onConfigChange(localConfig);
     setHasChanges(false);
-    
+
     // Mostrar notificación de éxito
     const notification = document.createElement('div');
     notification.className = 'alert alert-success';
@@ -46,9 +46,9 @@ const ConfigPanel = ({ config, onConfigChange }) => {
     notification.style.top = '20px';
     notification.style.right = '20px';
     notification.style.zIndex = '1000';
-    notification.innerHTML = ' Configuración guardada correctamente';
+    notification.innerHTML = 'Configuración guardada correctamente';
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
       document.body.removeChild(notification);
     }, 3000);
@@ -73,7 +73,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
         mutacionProbabilidad: 'Recomendado 15-25% para evitar mínimos locales'
       }
     };
-    
+
     return recommendations[section]?.[field] || '';
   };
 
@@ -82,13 +82,13 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       <div className="page-header">
         <h1 className="page-title">Configuración del Sistema</h1>
         <p className="page-description">
-          Ajusta los parámetros operativos del sistema de optimización según las necesidades específicas de tu centro 911
+          Ajusta los parámetros operativos del sistema de optimización según las necesidades específicas de tu centro 911.
         </p>
       </div>
 
       {hasChanges && (
         <div className="alert alert-warning">
-          <strong> Cambios sin guardar</strong>
+          <strong>Cambios sin guardar</strong>
           <div style={{ marginTop: 'var(--spacing-sm)' }}>
             Tienes modificaciones pendientes. No olvides guardar antes de salir.
           </div>
@@ -98,16 +98,16 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       {/* Configuración de Estaciones */}
       <section className="section">
         <h2 className="section-title">
-          <span></span>
+          <span>🏢</span>
           Estaciones de Trabajo
         </h2>
-        
+
         <div className="card">
           <div className="grid grid-3">
             <div className="form-group">
               <label className="form-label">
                 Estaciones Mínimas
-                <span style={{ color: 'var(--color-emergency)', marginLeft: '4px' }}>*</span>
+                <span style={{ color: 'var(--color-error)', marginLeft: '4px' }}>*</span>
               </label>
               <input
                 type="number"
@@ -117,7 +117,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
                 min="1"
                 max="10"
               />
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-light)', marginTop: '4px' }}>
                 {getRecommendation('estaciones', 'minimas')}
               </div>
             </div>
@@ -125,7 +125,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
             <div className="form-group">
               <label className="form-label">
                 Estaciones Máximas
-                <span style={{ color: 'var(--color-emergency)', marginLeft: '4px' }}>*</span>
+                <span style={{ color: 'var(--color-error)', marginLeft: '4px' }}>*</span>
               </label>
               <input
                 type="number"
@@ -135,7 +135,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
                 min={localConfig.estaciones.minimas}
                 max="20"
               />
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-light)', marginTop: '4px' }}>
                 {getRecommendation('estaciones', 'maximas')}
               </div>
             </div>
@@ -143,7 +143,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
             <div className="form-group">
               <label className="form-label">
                 Estaciones Actuales
-                <span style={{ color: 'var(--color-emergency)', marginLeft: '4px' }}>*</span>
+                <span style={{ color: 'var(--color-error)', marginLeft: '4px' }}>*</span>
               </label>
               <input
                 type="number"
@@ -153,7 +153,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
                 min={localConfig.estaciones.minimas}
                 max={localConfig.estaciones.maximas}
               />
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-light)', marginTop: '4px' }}>
                 {getRecommendation('estaciones', 'actual')}
               </div>
             </div>
@@ -167,27 +167,27 @@ const ConfigPanel = ({ config, onConfigChange }) => {
           <span>⏰</span>
           Requisitos por Turno
         </h2>
-        
+
         {Object.entries(localConfig.turnos).map(([turno, requisitos]) => (
           <div key={turno} className="card" style={{ marginBottom: 'var(--spacing-md)' }}>
-            <h3 style={{ 
-              marginBottom: 'var(--spacing-lg)', 
-              color: 'var(--color-gray-700)',
+            <h3 style={{
+              marginBottom: 'var(--spacing-lg)',
+              color: 'var(--color-primary-dark)',
               textTransform: 'capitalize',
               display: 'flex',
               alignItems: 'center',
               gap: 'var(--spacing-sm)'
             }}>
               <span>
-                {turno === 'matutino' ? '' : turno === 'vespertino' ? '' : ''}
+                {turno === 'matutino' ? '☀️' : turno === 'vespertino' ? '🌇' : '🌃'}
               </span>
               Turno {turno} ({turno === 'matutino' ? '6:00-14:00' : turno === 'vespertino' ? '14:00-22:00' : '22:00-6:00'})
             </h3>
-            
+
             <div className="grid grid-2">
               <div>
-                <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-dispatch)' }}>
-                   Despachadores
+                <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-primary-medium)' }}>
+                  🧑‍💻 Despachadores
                 </h4>
                 <div className="grid grid-2" style={{ gap: 'var(--spacing-sm)' }}>
                   <div className="form-group">
@@ -216,7 +216,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
               </div>
 
               <div>
-                <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-dispatch)' }}>
+                <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-primary-medium)' }}>
                   👨‍💼 Supervisores
                 </h4>
                 <div className="grid grid-2" style={{ gap: 'var(--spacing-sm)' }}>
@@ -249,7 +249,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
             <div style={{ marginTop: 'var(--spacing-md)' }}>
               <div className="form-group">
                 <label className="form-label">
-                   Personal Bilingüe Mínimo
+                  🗣️ Personal Bilingüe Mínimo
                 </label>
                 <input
                   type="number"
@@ -260,7 +260,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
                   max="10"
                   style={{ maxWidth: '200px' }}
                 />
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-light)', marginTop: '4px' }}>
                   Empleados bilingües requeridos para atender llamadas en inglés
                 </div>
               </div>
@@ -275,13 +275,13 @@ const ConfigPanel = ({ config, onConfigChange }) => {
           <span>🧬</span>
           Parámetros del Algoritmo Genético
         </h2>
-        
+
         <div className="card">
           <div className="grid grid-2">
             <div className="form-group">
               <label className="form-label">
                 Generaciones
-                <span style={{ color: 'var(--color-emergency)', marginLeft: '4px' }}>*</span>
+                <span style={{ color: 'var(--color-error)', marginLeft: '4px' }}>*</span>
               </label>
               <input
                 type="number"
@@ -291,7 +291,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
                 min="50"
                 max="500"
               />
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-light)', marginTop: '4px' }}>
                 {getRecommendation('algoritmo', 'generaciones')}
               </div>
             </div>
@@ -299,7 +299,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
             <div className="form-group">
               <label className="form-label">
                 Tamaño de Población
-                <span style={{ color: 'var(--color-emergency)', marginLeft: '4px' }}>*</span>
+                <span style={{ color: 'var(--color-error)', marginLeft: '4px' }}>*</span>
               </label>
               <input
                 type="number"
@@ -309,7 +309,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
                 min="20"
                 max="200"
               />
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-light)', marginTop: '4px' }}>
                 {getRecommendation('algoritmo', 'poblacion')}
               </div>
             </div>
@@ -328,7 +328,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginTop: '4px' }}>
                 <span>{(localConfig.algoritmo.cruceProbabilidad * 100).toFixed(0)}%</span>
-                <span style={{ color: 'var(--color-gray-500)' }}>
+                <span style={{ color: 'var(--color-text-light)' }}>
                   {getRecommendation('algoritmo', 'cruceProbabilidad')}
                 </span>
               </div>
@@ -348,7 +348,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginTop: '4px' }}>
                 <span>{(localConfig.algoritmo.mutacionProbabilidad * 100).toFixed(0)}%</span>
-                <span style={{ color: 'var(--color-gray-500)' }}>
+                <span style={{ color: 'var(--color-text-light)' }}>
                   {getRecommendation('algoritmo', 'mutacionProbabilidad')}
                 </span>
               </div>
@@ -360,23 +360,23 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       {/* Configuración Avanzada */}
       <section className="section">
         <h2 className="section-title" style={{ cursor: 'pointer' }} onClick={() => setShowAdvanced(!showAdvanced)}>
-          <span></span>
+          <span>⚙️</span>
           Configuración Avanzada
           <span style={{ marginLeft: 'auto', fontSize: '0.875rem' }}>
             {showAdvanced ? '▼' : '▶'}
           </span>
         </h2>
-        
+
         {showAdvanced && (
-          <div className="card">
-            <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-gray-700)' }}>
-               Configuración Especial
+          <div className="card fade-in">
+            <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
+              Configuración Especial
             </h3>
-            
+
             <div className="grid grid-2">
               <div>
                 <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-warning)' }}>
-                  Fin de Semana
+                  🗓️ Fin de Semana
                 </h4>
                 <div className="form-group">
                   <label className="form-label">Factor de Reducción</label>
@@ -396,8 +396,8 @@ const ConfigPanel = ({ config, onConfigChange }) => {
               </div>
 
               <div>
-                <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-emergency)' }}>
-                  Días Feriados
+                <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-error)' }}>
+                  🎉 Días Feriados
                 </h4>
                 <div className="form-group">
                   <label className="form-label">Factor de Reducción</label>
@@ -417,15 +417,15 @@ const ConfigPanel = ({ config, onConfigChange }) => {
               </div>
             </div>
 
-            <div style={{ 
-              marginTop: 'var(--spacing-lg)', 
-              padding: 'var(--spacing-md)', 
-              backgroundColor: 'var(--color-gray-50)', 
+            <div style={{
+              marginTop: 'var(--spacing-lg)',
+              padding: 'var(--spacing-md)',
+              backgroundColor: 'var(--color-bg)',
               borderRadius: 'var(--border-radius)',
               fontSize: '0.875rem',
-              color: 'var(--color-gray-600)'
+              color: 'var(--color-text-medium)'
             }}>
-              <strong>ℹ️ Nota:</strong> Los factores de reducción se aplicarán automáticamente a los requisitos mínimos 
+              <strong>ℹ️ Nota:</strong> Los factores de reducción se aplicarán automáticamente a los requisitos mínimos
               durante la optimización para días específicos. Un factor de 0.7 significa que se requerirá 70% del personal normal.
             </div>
           </div>
@@ -433,31 +433,32 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       </section>
 
       {/* Botones de Acción */}
-      <div style={{ 
-        position: 'sticky', 
-        bottom: 'var(--spacing-lg)', 
-        backgroundColor: 'white', 
-        padding: 'var(--spacing-lg)', 
-        borderRadius: 'var(--border-radius)', 
+      <div style={{
+        position: 'sticky',
+        bottom: 'var(--spacing-lg)',
+        backgroundColor: 'var(--color-surface)',
+        padding: 'var(--spacing-lg)',
+        borderRadius: 'var(--border-radius)',
         boxShadow: 'var(--shadow-lg)',
         display: 'flex',
         gap: 'var(--spacing-md)',
-        justifyContent: 'flex-end'
+        justifyContent: 'flex-end',
+        border: '1px solid var(--color-border)'
       }}>
-        <button 
+        <button
           className="btn btn-secondary"
           onClick={handleReset}
           disabled={!hasChanges}
         >
-           Restablecer
+          🔄 Restablecer
         </button>
-        
-        <button 
+
+        <button
           className="btn btn-primary"
           onClick={handleSave}
           disabled={!hasChanges}
         >
-           Guardar Configuración
+          💾 Guardar Configuración
         </button>
       </div>
     </div>
