@@ -194,7 +194,7 @@ Gabriela Rivera,Despachador,Si`;
       {/* Carga de Archivos */}
       <section className="section">
         <h2 className="section-title">
-          <span>⬆️</span>
+          <span>⬆</span>
           Cargar Personal {backendStatus === 'online' ? '(Procesamiento en Servidor)' : '(Requiere Backend)'}
         </h2>
 
@@ -219,7 +219,7 @@ Gabriela Rivera,Despachador,Si`;
               }}
             >
               <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>
-                {uploadLoading ? '⏳' : '📄'}
+                {uploadLoading ? '' : ''}
               </div>
               <h3 style={{ marginBottom: 'var(--spacing-sm)', color: 'var(--color-text-dark)' }}>
                 {uploadLoading ? 'Procesando archivo...' : 'Arrastra tu archivo CSV aquí'}
@@ -246,7 +246,7 @@ Gabriela Rivera,Despachador,Si`;
                   downloadSampleCSV();
                 }}
               >
-                ⬇️ Descargar Ejemplo
+                 Descargar Ejemplo
               </button>
 
               <input
@@ -304,7 +304,7 @@ Gabriela Rivera,Despachador,Si`;
                   setValidationWarnings([]);
                 }}
               >
-                📄 Cargar Otro Archivo
+                 Cargar Otro Archivo
               </button>
             </div>
 
@@ -343,7 +343,7 @@ Gabriela Rivera,Despachador,Si`;
       {isLoading && realTimeFitness.length > 0 && (
         <section className="section">
           <h2 className="section-title">
-            <span>📈</span>
+            <span></span>
             Evolución en Tiempo Real desde el Servidor
           </h2>
 
@@ -466,7 +466,7 @@ Gabriela Rivera,Despachador,Si`;
                       <td style={{ fontWeight: '500' }}>{emp.nombre}</td>
                       <td>
                         <span className={`badge ${emp.rol === 'Despachador' ? 'badge-primary' : 'badge-neutral'}`}>
-                          {emp.rol === 'Despachador' ? '🧑‍💻' : '👨‍💼'} {emp.rol}
+                          {emp.rol === 'Despachador' ? '' : ''} {emp.rol}
                         </span>
                       </td>
                       <td>
@@ -477,7 +477,7 @@ Gabriela Rivera,Despachador,Si`;
                         )}
                       </td>
                       <td>
-                        <span className="badge badge-success">✅ Validado</span>
+                        <span className="badge badge-success"> Validado</span>
                       </td>
                     </tr>
                   ))}
@@ -503,7 +503,7 @@ Gabriela Rivera,Despachador,Si`;
       {employees.length > 0 && (
         <section className="section">
           <h2 className="section-title">
-            <span>⚙️</span>
+            <span></span>
             Algoritmo Genético en el Servidor
           </h2>
 
@@ -514,10 +514,10 @@ Gabriela Rivera,Despachador,Si`;
                   Ejecución en Backend Python
                 </h4>
                 <ul style={{ fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--color-text-medium)' }}>
-                  <li>✅ Algoritmo genético nativo en NumPy</li>
-                  <li>✅ WebSocket para tiempo real</li>
-                  <li>✅ Procesamiento paralelo optimizado</li>
-                  <li>✅ Validación automática de restricciones</li>
+                  <li>✓ Algoritmo genético nativo en NumPy</li>
+                  <li>✓ WebSocket para tiempo real</li>
+                  <li>✓ Procesamiento paralelo optimizado</li>
+                  <li>✓ Validación automática de restricciones</li>
                 </ul>
               </div>
 
@@ -541,7 +541,7 @@ Gabriela Rivera,Despachador,Si`;
               borderRadius: 'var(--border-radius)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
-                <span>💡</span>
+                <span></span>
                 <strong>Ejecución del Servidor Python:</strong>
               </div>
               <div style={{ fontSize: '0.875rem', color: 'var(--color-text-medium)' }}>
@@ -582,7 +582,7 @@ Gabriela Rivera,Despachador,Si`;
                       Ejecutando en Servidor...
                     </>
                   ) : (
-                    <>🧬 Ejecutar en Backend Python</>
+                    <> Ejecutar en Backend Python</>
                   )}
                 </button>
                 <div style={{
@@ -612,7 +612,7 @@ Gabriela Rivera,Despachador,Si`;
                     minWidth: '250px'
                   }}
                 >
-                  🚫 No Disponible
+                  No Disponible
                 </button>
               </div>
             )}

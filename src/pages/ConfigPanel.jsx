@@ -69,8 +69,8 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       algoritmo: {
         generaciones: 'Entre 100-300. Más generaciones = mejor calidad pero más tiempo',
         poblacion: 'Entre 50-150. Mayor población = más diversidad',
-        cruceProbabilidad: 'Recomendado 80-95% para problemas complejos',
-        mutacionProbabilidad: 'Recomendado 15-25% para evitar mínimos locales'
+        cruceProbabilidad: 'Recomendado 80-95% ',
+        mutacionProbabilidad: 'Recomendado 15-25%'
       }
     };
 
@@ -98,7 +98,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       {/* Configuración de Estaciones */}
       <section className="section">
         <h2 className="section-title">
-          <span>🏢</span>
+          <span></span>
           Estaciones de Trabajo
         </h2>
 
@@ -164,7 +164,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       {/* Configuración por Turnos */}
       <section className="section">
         <h2 className="section-title">
-          <span>⏰</span>
+          <span></span>
           Requisitos por Turno
         </h2>
 
@@ -179,7 +179,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
               gap: 'var(--spacing-sm)'
             }}>
               <span>
-                {turno === 'matutino' ? '☀️' : turno === 'vespertino' ? '🌇' : '🌃'}
+                {turno === 'matutino' ? '' : turno === 'vespertino' ? '' : ''}
               </span>
               Turno {turno} ({turno === 'matutino' ? '6:00-14:00' : turno === 'vespertino' ? '14:00-22:00' : '22:00-6:00'})
             </h3>
@@ -187,7 +187,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
             <div className="grid grid-2">
               <div>
                 <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-primary-medium)' }}>
-                  🧑‍💻 Despachadores
+                  Despachadores
                 </h4>
                 <div className="grid grid-2" style={{ gap: 'var(--spacing-sm)' }}>
                   <div className="form-group">
@@ -217,7 +217,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
 
               <div>
                 <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-primary-medium)' }}>
-                  👨‍💼 Supervisores
+                  Supervisores
                 </h4>
                 <div className="grid grid-2" style={{ gap: 'var(--spacing-sm)' }}>
                   <div className="form-group">
@@ -249,7 +249,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
             <div style={{ marginTop: 'var(--spacing-md)' }}>
               <div className="form-group">
                 <label className="form-label">
-                  🗣️ Personal Bilingüe Mínimo
+                  Personal Bilingüe Mínimo
                 </label>
                 <input
                   type="number"
@@ -272,7 +272,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       {/* Configuración del Algoritmo */}
       <section className="section">
         <h2 className="section-title">
-          <span>🧬</span>
+          <span></span>
           Parámetros del Algoritmo Genético
         </h2>
 
@@ -360,7 +360,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
       {/* Configuración Avanzada */}
       <section className="section">
         <h2 className="section-title" style={{ cursor: 'pointer' }} onClick={() => setShowAdvanced(!showAdvanced)}>
-          <span>⚙️</span>
+          <span></span>
           Configuración Avanzada
           <span style={{ marginLeft: 'auto', fontSize: '0.875rem' }}>
             {showAdvanced ? '▼' : '▶'}
@@ -376,7 +376,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
             <div className="grid grid-2">
               <div>
                 <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-warning)' }}>
-                  🗓️ Fin de Semana
+                  Fin de Semana
                 </h4>
                 <div className="form-group">
                   <label className="form-label">Factor de Reducción</label>
@@ -397,7 +397,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
 
               <div>
                 <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-error)' }}>
-                  🎉 Días Feriados
+                  Días Feriados
                 </h4>
                 <div className="form-group">
                   <label className="form-label">Factor de Reducción</label>
@@ -432,7 +432,6 @@ const ConfigPanel = ({ config, onConfigChange }) => {
         )}
       </section>
 
-      {/* Botones de Acción */}
       <div style={{
         position: 'sticky',
         bottom: 'var(--spacing-lg)',
@@ -450,7 +449,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
           onClick={handleReset}
           disabled={!hasChanges}
         >
-          🔄 Restablecer
+          Restablecer
         </button>
 
         <button
@@ -458,7 +457,7 @@ const ConfigPanel = ({ config, onConfigChange }) => {
           onClick={handleSave}
           disabled={!hasChanges}
         >
-          💾 Guardar Configuración
+          Guardar Configuración
         </button>
       </div>
     </div>

@@ -40,9 +40,10 @@ const Header = ({ currentPage, onPageChange, employeeCount, hasResults, backendS
       <div className="container">
         <div className="header-content">
           <div className="header-title">
-            <div className="icon">911</div>
+            <div className="icon"></div>
             <div>
-              <h1>Sistema de Optimización</h1>
+              <h1>Sistema de Optimización codice Balam</h1>
+             
               <div style={{ fontSize: '0.9rem', color: 'var(--color-text-medium)' }}>
                 {getPageTitle()}
               </div>
@@ -80,7 +81,7 @@ const Header = ({ currentPage, onPageChange, employeeCount, hasResults, backendS
             </div>
 
             <div className="status-item">
-              <span style={{color: 'var(--color-text-medium)'}}>📊</span>
+              <span style={{color: 'var(--color-text-medium)'}}></span>
               <span
                 className="status-badge"
                 style={{
