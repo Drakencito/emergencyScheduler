@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react'; // Agregamos useEffect
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import React, { useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import '../styles/layout.css';
 
 const ResultsPage = ({ results, employees, config }) => {
     const [activeTab, setActiveTab] = useState('summary');
     const [selectedDay, setSelectedDay] = useState(0);
-    const [selectedScheduleOption, setSelectedScheduleOption] = useState(0); // Nuevo estado para seleccionar la opción
+    const [selectedScheduleOption, setSelectedScheduleOption] = useState(0);
 
     // Ajustamos la lógica para usar el horario seleccionado
     const currentSchedule = results?.bestSchedules?.[selectedScheduleOption]?.schedule;
     const currentAlerts = results?.bestSchedules?.[selectedScheduleOption]?.alerts;
     const currentFitness = results?.bestSchedules?.[selectedScheduleOption]?.fitness;
-
+    const employeeReport = results?.bestSchedules?.[selectedScheduleOption]?.employee_report;
 
     if (!results || !results.bestSchedules || results.bestSchedules.length === 0) {
         return (
@@ -21,7 +21,7 @@ const ResultsPage = ({ results, employees, config }) => {
                     <p className="page-description">No hay resultados disponibles</p>
                 </div>
                 <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-2xl)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}></div>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>📊</div>
                     <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-text-medium)' }}>
                         Sin Resultados
                     </h3>
@@ -47,21 +47,61 @@ const ResultsPage = ({ results, employees, config }) => {
 
     const getAlertIcon = (severity) => {
         switch (severity) {
-            case 'high': return '';
-            case 'medium': return '';
+            case 'high': return '🔴';
+            case 'medium': return '🟡';
             case 'low': return 'ℹ️';
-            default: return '';
+            default: return 'ℹ️';
         }
     };
 
     const getFitnessQuality = (fitness) => {
-        if (fitness >= 9000) return { label: 'Excelente', color: 'var(--color-success)', icon: '' };
-        if (fitness >= 7000) return { label: 'Buena', color: 'var(--color-success)', icon: '' };
-        if (fitness >= 5000) return { label: 'Regular', color: 'var(--color-warning)', icon: '' };
-        return { label: 'Necesita Mejora', color: 'var(--color-error)', icon: '' };
+        if (fitness >= 0.8) return { label: 'Excelente', color: 'var(--color-success)', icon: '🟢' };
+        if (fitness >= 0.6) return { label: 'Buena', color: 'var(--color-success)', icon: '✅' };
+        if (fitness >= 0.4) return { label: 'Regular', color: 'var(--color-warning)', icon: '🟡' };
+        return { label: 'Necesita Mejora', color: 'var(--color-error)', icon: '🔴' };
     };
 
-    // --- NUEVAS FUNCIONES PARA OBTENER EMPLEADOS LIBRES Y ASIGNADOS ---
+    // NUEVA FUNCIÓN: Preparar datos para gráfico de horas
+    const prepareHoursChartData = () => {
+        if (!employeeReport) return [];
+        
+        const hoursDistribution = {};
+        employeeReport.forEach(emp => {
+            const hours = emp.total_horas;
+            hoursDistribution[hours] = (hoursDistribution[hours] || 0) + 1;
+        });
+        
+        return Object.entries(hoursDistribution).map(([hours, count]) => ({
+            horas: `${hours}h`,
+            empleados: count
+        })).sort((a, b) => parseInt(a.horas) - parseInt(b.horas));
+    };
+
+    // NUEVA FUNCIÓN: Estadísticas del reporte de empleados
+    const getEmployeeStats = () => {
+        if (!employeeReport) return null;
+        
+        const totalEmployees = employeeReport.length;
+        const employees48h = employeeReport.filter(emp => emp.total_horas === 48).length;
+        const preferencesAvailable = employeeReport.some(emp => emp.dia_preferido !== null);
+        const preferencesMet = preferencesAvailable ? 
+            employeeReport.filter(emp => emp.preferencia_cumplida).length : 0;
+        
+        const hoursList = employeeReport.map(emp => emp.total_horas);
+        const avgHours = hoursList.reduce((a, b) => a + b, 0) / hoursList.length;
+        const variance = hoursList.reduce((acc, hours) => acc + Math.pow(hours - avgHours, 2), 0) / hoursList.length;
+        
+        return {
+            totalEmployees,
+            employees48h,
+            preferencesAvailable,
+            preferencesMet,
+            avgHours,
+            variance,
+            perfectEquity: variance === 0
+        };
+    };
+
     const getEmployeesForDay = (dayIndex, scheduleMatrix) => {
         const assigned = [];
         const free = [];
@@ -69,7 +109,7 @@ const ResultsPage = ({ results, employees, config }) => {
 
         employees.forEach((emp, empIndex) => {
             const assignment = scheduleMatrix[empIndex]?.[dayIndex];
-            if (assignment === 0) { // 0 significa día libre
+            if (assignment === 0) {
                 free.push(emp);
             } else {
                 assigned.push({ employee: emp, shift: assignment });
@@ -84,7 +124,7 @@ const ResultsPage = ({ results, employees, config }) => {
         return days.map((day, dayIndex) => ({
             day,
             shifts: shifts.map((shift, shiftIndex) => {
-                const shiftValue = shiftIndex + 1; // 1: Matutino, 2: Vespertino, 3: Nocturno
+                const shiftValue = shiftIndex + 1;
                 const assignedEmployees = [];
 
                 scheduleMatrix.forEach((empSchedule, empIndex) => {
@@ -105,12 +145,13 @@ const ResultsPage = ({ results, employees, config }) => {
             })
         }));
     };
-    // --- FIN NUEVAS FUNCIONES ---
 
     const scheduleData = generateScheduleFromMatrix(currentSchedule);
+    const employeeStats = getEmployeeStats();
+    const hoursChartData = prepareHoursChartData();
 
     const exportToCSV = () => {
-        let csv = 'Empleado,Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo\n';
+        let csv = 'Empleado,Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo,Total_Horas,Dias_Trabajados\n';
 
         if (currentSchedule && employees.length) {
             currentSchedule.forEach((empSchedule, empIndex) => {
@@ -123,6 +164,12 @@ const ResultsPage = ({ results, employees, config }) => {
                         else if (dayValue === 3) row.push('Nocturno');
                         else row.push('Error');
                     });
+                    
+                    // Agregar estadísticas del empleado
+                    const workDays = empSchedule.filter(day => day !== 0).length;
+                    row.push(workDays * 8); // Total horas
+                    row.push(workDays); // Días trabajados
+                    
                     csv += row.join(',') + '\n';
                 }
             });
@@ -140,31 +187,29 @@ const ResultsPage = ({ results, employees, config }) => {
     };
 
     const fitnessQuality = getFitnessQuality(currentFitness);
-
-    const tabs = [
-        { id: 'summary', label: 'Resumen', icon: '' },
-        { id: 'evolution', label: 'Evolución', icon: '' },
-        { id: 'schedule', label: 'Horarios', icon: '' },
-        { id: 'alerts', label: 'Alertas', icon: '' },
-        { id: 'statistics', label: 'Estadísticas', icon: '' }
-    ];
-
-    // Obtener la información de empleados libres para el día seleccionado
     const { free: employeesFreeToday } = getEmployeesForDay(selectedDay, currentSchedule);
 
+    const tabs = [
+        { id: 'summary', label: 'Resumen', icon: '📊' },
+        { id: 'multiobjetivo', label: 'Objetivos', icon: '🎯' },
+        { id: 'employee_report', label: 'Reporte Personal', icon: '👥' },
+        { id: 'evolution', label: 'Evolución', icon: '📈' },
+        { id: 'schedule', label: 'Horarios', icon: '📅' },
+        { id: 'alerts', label: 'Alertas', icon: '⚠️' }
+    ];
 
     return (
         <div className="page-content fade-in">
             <div className="page-header">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
                     <div>
-                        <h1 className="page-title">Resultados de Optimización</h1>
+                        <h1 className="page-title">Resultados de Optimización Multiobjetivo</h1>
                         <p className="page-description">
-                            Análisis completo de los horarios optimizados para {employees.length} empleados.
+                            Análisis completo con enfoque en cobertura, equidad y cumplimiento para {employees.length} empleados.
                         </p>
                     </div>
                     <button className="btn btn-primary" onClick={exportToCSV}>
-                        Exportar CSV
+                        📄 Exportar CSV
                     </button>
                 </div>
             </div>
@@ -173,7 +218,7 @@ const ResultsPage = ({ results, employees, config }) => {
             {results.bestSchedules.length > 1 && (
                 <section className="section">
                     <h2 className="section-title">
-                        <span></span> Opciones de Horario
+                        <span>🔄</span> Opciones de Horario
                     </h2>
                     <div className="card">
                         <div className="grid grid-3" style={{ gap: 'var(--spacing-md)' }}>
@@ -198,46 +243,64 @@ const ResultsPage = ({ results, employees, config }) => {
                                 >
                                     Opción {index + 1}
                                     <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: selectedScheduleOption === index ? 'var(--color-text-bright)' : 'var(--color-text-medium)' }}>
-                                        Aptitud: {option.fitness.toLocaleString()}
+                                        Fitness: {option.fitness?.toFixed(3) || 'N/A'}
                                     </span>
                                 </button>
                             ))}
-                        </div>
-                        <div style={{
-                            marginTop: 'var(--spacing-lg)',
-                            padding: 'var(--spacing-md)',
-                            backgroundColor: 'var(--color-bg)',
-                            borderRadius: 'var(--border-radius)',
-                            fontSize: '0.875rem',
-                            color: 'var(--color-text-medium)'
-                        }}>
-                            <strong>ℹ️ Nota:</strong> Puedes elegir entre las {results.bestSchedules.length} mejores opciones generadas por el algoritmo.
-                            Cada opción tiene su propio nivel de aptitud y detalle de alertas.
                         </div>
                     </div>
                 </section>
             )}
 
-
+            {/* Métricas principales */}
             <section className="section">
-                <div className="grid grid-3"> {/* Cambiar de grid-4 a grid-3 */}
+                <div className="grid grid-4">
                     <div className="stat-card primary">
                         <div className="stat-header">
-                            <span className="stat-title">Aptitud Actual</span>
+                            <span className="stat-title">Fitness Multiobjetivo</span>
                             <span style={{ fontSize: '1.5rem' }}>{fitnessQuality.icon}</span>
                         </div>
                         <div className="stat-value" style={{ color: fitnessQuality.color }}>
-                            {currentFitness.toLocaleString()}
+                            {currentFitness?.toFixed(3) || 'N/A'}
                         </div>
                         <div className="stat-change" style={{ color: fitnessQuality.color }}>
                             {fitnessQuality.label}
                         </div>
                     </div>
 
+                    <div className="stat-card success">
+                        <div className="stat-header">
+                            <span className="stat-title">Equidad (Varianza)</span>
+                            <span style={{ fontSize: '1.5rem' }}>⚖️</span>
+                        </div>
+                        <div className="stat-value">{employeeStats?.variance.toFixed(2) || 'N/A'}</div>
+                        <div className="stat-change">
+                            {employeeStats?.perfectEquity ? 
+                                <span className="positive">✅ Perfecto</span> :
+                                employeeStats?.variance < 10 ? 
+                                <span className="positive">✅ Excelente</span> :
+                                <span className="neutral">⚖️ Aceptable</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div className="stat-card warning">
+                        <div className="stat-header">
+                            <span className="stat-title">Empleados 48h</span>
+                            <span style={{ fontSize: '1.5rem' }}>⏰</span>
+                        </div>
+                        <div className="stat-value">{employeeStats?.employees48h || 0}</div>
+                        <div className="stat-change">
+                            <span className="positive">
+                                {employeeStats ? `${((employeeStats.employees48h / employeeStats.totalEmployees) * 100).toFixed(1)}%` : '0%'} del total
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="stat-card error">
                         <div className="stat-header">
                             <span className="stat-title">Alertas Críticas</span>
-                            <span style={{ fontSize: '1.5rem' }}></span>
+                            <span style={{ fontSize: '1.5rem' }}>🚨</span>
                         </div>
                         <div className="stat-value">{currentAlerts?.critical || 0}</div>
                         <div className="stat-change">
@@ -247,21 +310,6 @@ const ResultsPage = ({ results, employees, config }) => {
                             }
                         </div>
                     </div>
-
-                    <div className="stat-card success">
-                        <div className="stat-header">
-                            <span className="stat-title">Empleados 48h</span>
-                            <span style={{ fontSize: '1.5rem' }}></span>
-                        </div>
-                        <div className="stat-value">{Math.round(results.statistics?.empleados48h || 0)}</div>
-                        <div className="stat-change">
-                            <span className="positive">
-                                {(((results.statistics?.empleados48h || 0) / employees.length) * 100).toFixed(1)}% del total
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* CARD DE BALANCE ELIMINADA */}
                 </div>
             </section>
 
@@ -293,50 +341,299 @@ const ResultsPage = ({ results, employees, config }) => {
                     </div>
                 </div>
 
-                {/* Contenido de Pestañas */}
+                {/* NUEVA PESTAÑA: Objetivos Multiobjetivo */}
+                {activeTab === 'multiobjetivo' && (
+                    <div className="fade-in">
+                        <div className="card">
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
+                                🎯 Análisis Multiobjetivo
+                            </h3>
+                            
+                            {/* Mostrar métricas específicas si están disponibles */}
+                            {results.bestSchedules?.[selectedScheduleOption]?.cobertura !== undefined && (
+                                <div className="grid grid-3" style={{ marginBottom: 'var(--spacing-xl)' }}>
+                                    <div className="stat-card success">
+                                        <div className="stat-header">
+                                            <span className="stat-title">Cobertura</span>
+                                            <span style={{ fontSize: '1.5rem' }}>📊</span>
+                                        </div>
+                                        <div className="stat-value">
+                                            {(results.bestSchedules[selectedScheduleOption].cobertura * 100).toFixed(1)}%
+                                        </div>
+                                        <div className="stat-change positive">Turnos cubiertos</div>
+                                    </div>
+
+                                    <div className="stat-card primary">
+                                        <div className="stat-header">
+                                            <span className="stat-title">Cumplimiento</span>
+                                            <span style={{ fontSize: '1.5rem' }}>📋</span>
+                                        </div>
+                                        <div className="stat-value">
+                                            {(results.bestSchedules[selectedScheduleOption].cumplimiento * 100).toFixed(1)}%
+                                        </div>
+                                        <div className="stat-change neutral">Solicitudes aprobadas</div>
+                                    </div>
+
+                                    <div className="stat-card warning">
+                                        <div className="stat-header">
+                                            <span className="stat-title">Varianza Horas</span>
+                                            <span style={{ fontSize: '1.5rem' }}>⚖️</span>
+                                        </div>
+                                        <div className="stat-value">
+                                            {results.bestSchedules[selectedScheduleOption].varianza?.toFixed(2) || 'N/A'}
+                                        </div>
+                                        <div className="stat-change neutral">Equidad laboral</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{
+                                padding: 'var(--spacing-lg)',
+                                backgroundColor: 'var(--color-bg)',
+                                borderRadius: 'var(--border-radius)',
+                                lineHeight: 1.6
+                            }}>
+                                <h4 style={{ color: 'var(--color-primary-dark)', marginBottom: 'var(--spacing-md)' }}>
+                                    📐 Fórmula Multiobjetivo Aplicada:
+                                </h4>
+                                <div style={{ 
+                                    fontFamily: 'var(--font-mono)', 
+                                    fontSize: '1.1rem', 
+                                    textAlign: 'center',
+                                    color: 'var(--color-primary-medium)',
+                                    backgroundColor: 'var(--color-surface)',
+                                    padding: 'var(--spacing-md)',
+                                    borderRadius: 'var(--border-radius)',
+                                    border: '1px solid var(--color-border)'
+                                }}>
+                                    FITNESS = (Cobertura × Cumplimiento) / (1 + Varianza)
+                                </div>
+                                <div style={{ marginTop: 'var(--spacing-md)', color: 'var(--color-text-medium)', fontSize: '0.9rem' }}>
+                                    <strong>Interpretación:</strong> La función maximiza la cobertura de turnos y el cumplimiento de solicitudes,
+                                    mientras minimiza la varianza en las horas trabajadas para lograr equidad laboral.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* NUEVA PESTAÑA: Reporte por Empleado */}
+                {activeTab === 'employee_report' && (
+                    <div className="fade-in">
+                        {employeeReport && employeeStats ? (
+                            <>
+                                {/* Estadísticas generales */}
+                                <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                    <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
+                                        📊 Estadísticas Generales del Personal
+                                    </h3>
+                                    
+                                    <div className="grid grid-4">
+                                        <div style={{ textAlign: 'center' }}>
+                                            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-primary-dark)' }}>
+                                                {employeeStats.totalEmployees}
+                                            </div>
+                                            <div style={{ color: 'var(--color-text-medium)' }}>Total Empleados</div>
+                                        </div>
+
+                                        <div style={{ textAlign: 'center' }}>
+                                            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-success)' }}>
+                                                {employeeStats.employees48h}
+                                            </div>
+                                            <div style={{ color: 'var(--color-text-medium)' }}>Con 48 Horas</div>
+                                        </div>
+
+                                        <div style={{ textAlign: 'center' }}>
+                                            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-warning)' }}>
+                                                {employeeStats.avgHours.toFixed(1)}h
+                                            </div>
+                                            <div style={{ color: 'var(--color-text-medium)' }}>Promedio Horas</div>
+                                        </div>
+
+                                        {employeeStats.preferencesAvailable && (
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-primary-light)' }}>
+                                                    {employeeStats.preferencesMet}
+                                                </div>
+                                                <div style={{ color: 'var(--color-text-medium)' }}>Preferencias Cumplidas</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Gráfico de distribución de horas */}
+                                {hoursChartData.length > 0 && (
+                                    <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+                                        <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
+                                            📊 Distribución de Horas Trabajadas
+                                        </h3>
+                                        <div style={{ height: '300px' }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={hoursChartData}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                                    <XAxis 
+                                                        dataKey="horas" 
+                                                        tick={{ fill: 'var(--color-text-medium)', fontSize: '0.8rem' }}
+                                                    />
+                                                    <YAxis 
+                                                        tick={{ fill: 'var(--color-text-medium)', fontSize: '0.8rem' }}
+                                                    />
+                                                    <Tooltip 
+                                                        formatter={(value) => [value, 'Empleados']}
+                                                        contentStyle={{ 
+                                                            backgroundColor: 'var(--color-surface)', 
+                                                            border: '1px solid var(--color-border)',
+                                                            borderRadius: 'var(--border-radius)' 
+                                                        }}
+                                                    />
+                                                    <Bar 
+                                                        dataKey="empleados" 
+                                                        fill="var(--color-primary-light)"
+                                                        radius={[4, 4, 0, 0]}
+                                                    />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Tabla detallada de empleados */}
+                                <div className="card">
+                                    <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
+                                        👥 Detalle por Empleado
+                                    </h3>
+                                    
+                                    <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                                        <table className="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Empleado</th>
+                                                    <th>Rol</th>
+                                                    <th>Horas</th>
+                                                    <th>Días</th>
+                                                    <th>Matutinos</th>
+                                                    <th>Vespertinos</th>
+                                                    <th>Nocturnos</th>
+                                                    <th>Día Libre</th>
+                                                    {employeeStats.preferencesAvailable && <th>Preferencia</th>}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {employeeReport.map((emp, index) => (
+                                                    <tr key={index}>
+                                                        <td style={{ fontWeight: '500' }}>
+                                                            {emp.nombre}
+                                                            {emp.bilingue === 'Si' && (
+                                                                <span className="badge badge-success" style={{ marginLeft: '4px', fontSize: '0.7rem' }}>B</span>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            <span className={`badge ${emp.rol === 'Despachador' ? 'badge-primary' : 'badge-warning'}`}>
+                                                                {emp.rol}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span style={{ 
+                                                                color: emp.total_horas === 48 ? 'var(--color-success)' : 'var(--color-warning)',
+                                                                fontWeight: 'bold'
+                                                            }}>
+                                                                {emp.total_horas}h
+                                                            </span>
+                                                        </td>
+                                                        <td>{emp.dias_trabajados}</td>
+                                                        <td>{emp.turnos_matutino}</td>
+                                                        <td>{emp.turnos_vespertino}</td>
+                                                        <td>{emp.turnos_nocturno}</td>
+                                                        <td>{emp.dias_libres.join(', ')}</td>
+                                                        {employeeStats.preferencesAvailable && (
+                                                            <td>
+                                                                {emp.dia_preferido && (
+                                                                    <span style={{ 
+                                                                        color: emp.preferencia_cumplida ? 'var(--color-success)' : 'var(--color-error)',
+                                                                        fontSize: '0.8rem'
+                                                                    }}>
+                                                                        {emp.preferencia_cumplida ? '✅' : '❌'} {emp.dia_preferido}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-2xl)' }}>
+                                <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>📊</div>
+                                <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-text-medium)' }}>
+                                    Reporte no disponible
+                                </h3>
+                                <p style={{ color: 'var(--color-text-light)' }}>
+                                    El reporte detallado por empleado no está disponible para esta optimización.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Pestañas existentes sin cambios */}
                 {activeTab === 'summary' && (
-                  <div className="fade-in">
-                      <div className="card">
-                          <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
-                              Resumen Ejecutivo
-                          </h3>
+                    <div className="fade-in">
+                        <div className="card">
+                            <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
+                                📋 Resumen Ejecutivo Multiobjetivo
+                            </h3>
 
-                          <div style={{ lineHeight: 1.8, fontSize: '1rem', color: 'var(--color-text-dark)' }}>
-                              <p style={{ marginBottom: 'var(--spacing-md)' }}>
-                                  <strong>Optimización completada exitosamente</strong> con una aptitud de{' '}
-                                  <span style={{ color: fitnessQuality.color, fontWeight: 'bold' }}>
-                                      {currentFitness.toLocaleString()} puntos
-                                  </span>
-                                  , clasificada como <strong>{fitnessQuality.label}</strong>.
-                              </p>
+                            <div style={{ lineHeight: 1.8, fontSize: '1rem', color: 'var(--color-text-dark)' }}>
+                                <p style={{ marginBottom: 'var(--spacing-md)' }}>
+                                    <strong>Optimización multiobjetivo completada exitosamente</strong> con un fitness de{' '}
+                                    <span style={{ color: fitnessQuality.color, fontWeight: 'bold' }}>
+                                        {currentFitness?.toFixed(3) || 'N/A'}
+                                    </span>
+                                    , clasificada como <strong>{fitnessQuality.label}</strong>.
+                                </p>
 
-                              <p style={{ marginBottom: 'var(--spacing-md)' }}>
-                                  <strong>Personal asignado:</strong> {Math.round(results.statistics?.empleados48h || 0)} de {employees.length} empleados
-                                  ({(((results.statistics?.empleados48h || 0) / employees.length) * 100).toFixed(1)}%)
-                                  trabajan exactamente 48 horas semanales.
-                              </p>
+                                <p style={{ marginBottom: 'var(--spacing-md)' }}>
+                                    <strong>Equidad laboral:</strong> La varianza de horas es de{' '}
+                                    <strong>{employeeStats?.variance.toFixed(2) || 'N/A'}</strong>, lo que indica{' '}
+                                    {employeeStats?.perfectEquity ? 
+                                        'una distribución perfectamente equitativa' :
+                                        employeeStats?.variance < 10 ? 
+                                        'una excelente distribución de carga laboral' :
+                                        'una distribución aceptable de horas'
+                                    }.
+                                </p>
 
-                              <p style={{ marginBottom: 'var(--spacing-md)' }}>
-                                  <strong>Estado de alertas:</strong> {currentAlerts?.critical || 0} críticas, {currentAlerts?.warning || 0} advertencias, {currentAlerts?.info || 0} informativas.
-                                  {(currentAlerts?.critical || 0) === 0 ? ' Sistema operando dentro de parámetros normales.' : ' Revisar alertas críticas.'}
-                              </p>
+                                <p style={{ marginBottom: 'var(--spacing-md)' }}>
+                                    <strong>Personal asignado:</strong> {employeeStats?.employees48h || 0} de {employeeStats?.totalEmployees || employees.length} empleados
+                                    ({employeeStats ? ((employeeStats.employees48h / employeeStats.totalEmployees) * 100).toFixed(1) : '0'}%)
+                                    trabajan exactamente 48 horas semanales.
+                                </p>
 
-                              <p>
-                                  <strong>Cobertura bilingüe:</strong>{' '}
-                                  {((results.statistics?.coberturaBilingue || 0) * 100).toFixed(0)}% de los turnos cuentan con personal bilingüe adecuado.
-                              </p>
+                                {employeeStats?.preferencesAvailable && (
+                                    <p style={{ marginBottom: 'var(--spacing-md)' }}>
+                                        <strong>Cumplimiento de solicitudes:</strong> {employeeStats.preferencesMet} de {employeeStats.totalEmployees} empleados
+                                        ({((employeeStats.preferencesMet / employeeStats.totalEmployees) * 100).toFixed(1)}%)
+                                        obtuvieron su día libre preferido.
+                                    </p>
+                                )}
 
-                              {/* PÁRRAFO DEL BALANCE ELIMINADO */}
-                          </div>
-                      </div>
-                  </div>
-              )}
+                                <p>
+                                    <strong>Estado de alertas:</strong> {currentAlerts?.critical || 0} críticas, {currentAlerts?.warning || 0} advertencias.
+                                    {(currentAlerts?.critical || 0) === 0 ? ' Sistema operando dentro de parámetros normales.' : ' Revisar alertas críticas.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {activeTab === 'evolution' && (
                     <div className="fade-in">
                         <div className="card">
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
-                                Evolución de la Aptitud
+                                📈 Evolución del Fitness Multiobjetivo
                             </h3>
 
                             {results.fitnessHistory && results.fitnessHistory.length > 0 ? (
@@ -351,11 +648,11 @@ const ResultsPage = ({ results, employees, config }) => {
                                                     tick={{ fill: 'var(--color-text-medium)', fontSize: '0.8rem' }}
                                                 />
                                                 <YAxis
-                                                    label={{ value: 'Aptitud', angle: -90, position: 'insideLeft', fill: 'var(--color-text-light)' }}
+                                                    label={{ value: 'Fitness', angle: -90, position: 'insideLeft', fill: 'var(--color-text-light)' }}
                                                     tick={{ fill: 'var(--color-text-medium)', fontSize: '0.8rem' }}
                                                 />
                                                 <Tooltip
-                                                    formatter={(value) => [value.toLocaleString(), 'Aptitud']}
+                                                    formatter={(value) => [value.toFixed(4), 'Fitness']}
                                                     labelFormatter={(label) => `Generación ${label}`}
                                                     contentStyle={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--border-radius)' }}
                                                     labelStyle={{ color: 'var(--color-primary-dark)' }}
@@ -375,21 +672,21 @@ const ResultsPage = ({ results, employees, config }) => {
                                     <div className="grid grid-3">
                                         <div style={{ textAlign: 'center' }}>
                                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-text-dark)' }}>
-                                                {results.fitnessHistory[0]?.fitness.toLocaleString()}
+                                                {results.fitnessHistory[0]?.fitness.toFixed(4)}
                                             </div>
-                                            <div style={{ color: 'var(--color-text-medium)' }}>Aptitud Inicial</div>
+                                            <div style={{ color: 'var(--color-text-medium)' }}>Fitness Inicial</div>
                                         </div>
 
                                         <div style={{ textAlign: 'center' }}>
                                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-success)' }}>
-                                                {Math.max(...results.fitnessHistory.map(h => h.fitness)).toLocaleString()}
+                                                {Math.max(...results.fitnessHistory.map(h => h.fitness)).toFixed(4)}
                                             </div>
-                                            <div style={{ color: 'var(--color-text-medium)' }}>Mejor Aptitud</div>
+                                            <div style={{ color: 'var(--color-text-medium)' }}>Mejor Fitness</div>
                                         </div>
 
                                         <div style={{ textAlign: 'center' }}>
                                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary-dark)' }}>
-                                                {(results.fitnessHistory[results.fitnessHistory.length - 1]?.fitness - results.fitnessHistory[0]?.fitness).toLocaleString()}
+                                                {(results.fitnessHistory[results.fitnessHistory.length - 1]?.fitness - results.fitnessHistory[0]?.fitness).toFixed(4)}
                                             </div>
                                             <div style={{ color: 'var(--color-text-medium)' }}>Mejora Total</div>
                                         </div>
@@ -424,7 +721,7 @@ const ResultsPage = ({ results, employees, config }) => {
 
                         <div className="card">
                             <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
-                                Horarios - {days[selectedDay]}
+                                📅 Horarios - {days[selectedDay]}
                             </h3>
 
                             {scheduleData.length > 0 ? (
@@ -442,7 +739,7 @@ const ResultsPage = ({ results, employees, config }) => {
                                             {scheduleData[selectedDay]?.shifts.map((shiftData, shiftIndex) => (
                                                 <tr key={shiftIndex}>
                                                     <td style={{ fontWeight: 'bold' }}>
-                                                        {shiftData.shift === 'Matutino' ? '' : shiftData.shift === 'Vespertino' ? '' : ''} {shiftData.shift}
+                                                        {shiftData.shift === 'Matutino' ? '🌅' : shiftData.shift === 'Vespertino' ? '🌆' : '🌙'} {shiftData.shift}
                                                     </td>
                                                     <td>
                                                         {shiftData.dispatchers.length > 0 ? (
@@ -492,9 +789,8 @@ const ResultsPage = ({ results, employees, config }) => {
                                 </div>
                             )}
 
-                          
                             <h4 style={{ marginTop: 'var(--spacing-2xl)', marginBottom: 'var(--spacing-md)', color: 'var(--color-primary-medium)' }}>
-                                 Empleados Libres el {days[selectedDay]}
+                                🏖️ Empleados Libres el {days[selectedDay]}
                             </h4>
                             {employeesFreeToday.length > 0 ? (
                                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
@@ -581,102 +877,6 @@ const ResultsPage = ({ results, employees, config }) => {
                                 </p>
                             </div>
                         )}
-                    </div>
-                )}
-
-                {activeTab === 'statistics' && (
-                    <div className="fade-in">
-                        <div className="grid grid-2">
-                            <div className="card">
-                                <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
-                                    Estadísticas Generales del Mejor Horario Global
-                                </h3>
-
-                                <div style={{ lineHeight: 1.8, fontSize: '0.9rem', color: 'var(--color-text-dark)' }}>
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        marginBottom: 'var(--spacing-sm)'
-                                    }}>
-                                        <span>Empleados con 48h exactas:</span>
-                                        <strong style={{ color: 'var(--color-success)' }}>
-                                            {(((results.statistics?.empleados48h || 0) / employees.length) * 100).toFixed(1)}%
-                                        </strong>
-                                    </div>
-
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        marginBottom: 'var(--spacing-sm)'
-                                    }}>
-                                        <span>Alertas críticas (en este horario):</span>
-                                        <strong style={{ color: currentAlerts?.critical > 0 ? 'var(--color-error)' : 'var(--color-success)' }}>
-                                            {currentAlerts?.critical || 0}
-                                        </strong>
-                                    </div>
-
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        marginBottom: 'var(--spacing-sm)'
-                                    }}>
-                                        <span>Eficiencia del algoritmo (en este horario):</span>
-                                        <strong style={{ color: fitnessQuality.color }}>
-                                            {fitnessQuality.label}
-                                        </strong>
-                                    </div>
-
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        marginBottom: 'var(--spacing-sm)'
-                                    }}>
-                                        <span>Cobertura bilingüe:</span>
-                                        <strong style={{ color: 'var(--color-success)' }}>
-                                            {((results.statistics?.coberturaBilingue || 0) * 100).toFixed(0)}%
-                                        </strong>
-                                    </div>
-
-                                    {/* LÍNEA DEL BALANCE DE DISTRIBUCIÓN ELIMINADA */}
-                                </div>
-                            </div>
-
-                            <div className="card">
-                                <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-primary-dark)' }}>
-                                    Resumen de Cumplimiento
-                                </h3>
-
-                                <div style={{ lineHeight: 1.8, fontSize: '0.9rem', color: 'var(--color-text-dark)' }}>
-                                    <div style={{ marginBottom: 'var(--spacing-md)' }}>
-                                        <div style={{ fontWeight: 'bold', marginBottom: 'var(--spacing-xs)' }}>
-                                            Cobertura por Turno:
-                                        </div>
-                                        {shifts.map((shift, index) => (
-                                            <div key={index} style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                marginBottom: 'var(--spacing-xs)',
-                                                color: 'var(--color-text-medium)'
-                                            }}>
-                                                <span>
-                                                    {shift === 'Matutino' ? '' : shift === 'Vespertino' ? '' : ''} {shift}:
-                                                </span>
-                                                <span style={{ color: 'var(--color-success)' }}>Cubierto </span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div>
-                                        <div style={{ fontWeight: 'bold', marginBottom: 'var(--spacing-xs)' }}>
-                                            Estado General:
-                                        </div>
-                                        <div style={{ color: 'var(--color-success)' }}>
-                                            Optimización completada exitosamente 
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 )}
             </section>
